@@ -1,0 +1,14 @@
+# Environment variables (contains email credentials)
+.env
+
+# Excel data files (may contain real student data)
+*.xlsx
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE files
+.vscode/
+.idea/
