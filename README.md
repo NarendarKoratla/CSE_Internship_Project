@@ -1,134 +1,96 @@
 # Email-Enabled Attendance Tracker
 
-A desktop application built with Python and Tkinter that tracks student attendance using Excel files and automatically sends email notifications to students who exceed their leave limit.
-
-> Built as a **2nd Year CSE Internship Project**.
+A Python desktop application for recording student absences in Excel workbooks and sending email notifications when students reach configured absence thresholds. Built as a CSE internship project.
 
 ## Features
 
-- **GUI Interface**: Clean Tkinter-based two-page interface for selecting year, section, subject, and entering absentee roll numbers.
-- **Excel Integration**: Reads and updates student attendance records stored in `.xlsx` files using `openpyxl`.
-- **Automated Email Alerts**: Sends progressive warning emails to students based on their absence count:
-  - 1st leave — Caution notice
-  - 2nd leave — Warning notice
-  - 3rd leave — Final alert
-  - 4+ leaves — Exceeded limit notice + staff notification
-- **Staff Notification**: Automatically notifies the respective faculty when a student crosses the allowed leave threshold.
+- Tkinter desktop interface for selecting academic year, section, subject, and student roll numbers.
+- Reads and updates attendance workbooks using `openpyxl`.
+- Sends student notifications through Gmail SMTP.
+- Sends a staff notification when a student exceeds the configured threshold.
+- Loads email credentials and the Excel data directory from environment variables using `python-dotenv`.
+- Includes a sample-data generator for testing without real student records.
 
-## Tech Stack
+## Technology
 
-- **Python 3**
-- **Tkinter** — GUI framework
-- **openpyxl** — Excel file read/write
-- **smtplib** — Email delivery via Gmail SMTP
-- **python-dotenv** — Secure credential management
+- Python 3
+- Tkinter (included with many standard Python installations)
+- openpyxl
+- python-dotenv
+- smtplib (Python standard library)
 
-## Project Structure
+## Requirements
 
-```
-CSE_Internship_Project/
-├── app.py                    # Main application
-├── generate_sample_data.py   # Script to generate sample Excel files for testing
-├── .env.example              # Template for environment variables
-├── .gitignore                # Git ignore rules
-├── README.md                 # This file
-├── sample_data/              # Generated sample Excel files (after running the script)
-│   ├── 1st_CSE-A.xlsx
-│   ├── 1st_CSE-B.xlsx
-│   └── ...
-├── .env                      # Your credentials (not tracked by git)
-└── *.xlsx                    # Real student data files (not tracked by git)
-```
+- Python 3
+- Gmail account configured for SMTP with a Google App Password
+- Excel workbooks matching the expected column layout
 
-## Getting Started
+## Run locally
 
-Follow these steps to set up and run the project on your machine:
-
-### Step 1: Clone the Repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/NarendarKoratla/CSE_Internship_Project.git
 cd CSE_Internship_Project
 ```
 
-### Step 2: Install Dependencies
-
-Make sure you have Python 3 installed, then run:
+### 2. Install Python dependencies
 
 ```bash
-pip install openpyxl python-dotenv
+python -m pip install openpyxl python-dotenv
 ```
 
-### Step 3: Set Up Email Credentials
+### 3. Configure environment variables
 
-1. Copy the example environment file:
-   ```bash
-   # On Windows
-   copy .env.example .env
+Copy `.env.example` to `.env`, then update the values:
 
-   # On Mac/Linux
-   cp .env.example .env
-   ```
+```dotenv
+SENDER_EMAIL=your_email@gmail.com
+SENDER_PASSWORD=your_google_app_password
+EXCEL_FILE_DIR=./sample_data
+```
 
-2. Open the `.env` file and fill in your details:
-   ```
-   SENDER_EMAIL=your_email@gmail.com
-   SENDER_PASSWORD=your_app_password_here
-   EXCEL_FILE_DIR=C:\path\to\your\excel\files
-   ```
+Use a Google App Password where required; do not use your regular Google account password. Never commit `.env`, credentials, or real student data. Confirm that `.env` is ignored by Git before adding secrets.
 
-> **Important:** You must use a [Google App Password](https://myaccount.google.com/apppasswords), not your regular Gmail password. To generate one:
-> 1. Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
-> 2. Select **Mail** as the app
-> 3. Generate and copy the 16-character password
-> 4. Paste it as `SENDER_PASSWORD` in your `.env` file
-
-### Step 4: Generate Sample Data (For Testing)
-
-Run the sample data generator to create Excel files with dummy student data:
+### 4. Generate sample workbooks
 
 ```bash
 python generate_sample_data.py
 ```
 
-This creates 12 Excel files inside the `sample_data/` folder (one per year-section combination). Update `EXCEL_FILE_DIR` in your `.env` to point to this folder:
+Set `EXCEL_FILE_DIR` to the generated `sample_data` directory (use an absolute path if your environment does not resolve the relative path as expected).
 
-```
-EXCEL_FILE_DIR=C:\path\to\CSE_Internship_Project\sample_data
-```
-
-### Step 5: Run the Application
+### 5. Start the application
 
 ```bash
 python app.py
 ```
 
-## How It Works
+## Expected Excel layout
 
-1. **Page 1** — Select the **Academic Year** (1st–4th) and **Section** (CSE-A/B/C), then click **Next**.
-2. **Page 2** — Select the **Subject**, enter the **Number of Absentees**, and type their **Roll Numbers** separated by spaces.
-3. Click **Submit Attendance** — the app will:
-   - Update the absence count in the corresponding Excel file
-   - Send automated email alerts to students based on their absence level
-   - Notify staff if any student exceeds the leave limit
+The app expects each workbook to contain columns in this order:
 
-## Excel File Format
+| Column | Value |
+|---|---|
+| A | Roll number |
+| B | Student name |
+| C | Student email |
+| D onward | Absence counts for the configured subjects |
 
-Each Excel file must follow this exact column layout:
+Subject-column ordering must match the `SUBJECTS` configuration in `app.py`. Use dummy records when testing.
 
-| Column A | Column B | Column C | Column D | Column E | Column F |
-|----------|----------|----------|----------|----------|----------|
-| Roll No  | Name     | Email    | Subject 1 absences | Subject 2 absences | Subject 3 absences |
+## Notification logic
 
-**Example for `1st_CSE-A.xlsx`:**
+The current code sends progressively stronger messages at the first, second, and third absence, and sends an exceeded-limit message after the third absence. It also attempts to notify the configured staff email for that year and subject.
 
-| Roll No | Name         | Email              | M1 | EC | PPS |
-|---------|--------------|--------------------|----|----|----|
-| 1       | Rahul Sharma | rahul@gmail.com    | 0  | 0  | 0  |
-| 2       | Priya Reddy  | priya@gmail.com    | 0  | 0  | 0  |
+## Notes and limitations
 
-> The subjects in columns D, E, F must match the order defined in `SUBJECTS` inside `app.py`.
+- The application updates Excel files locally; keep backups before testing with important data.
+- The number-of-absentees field is collected by the UI, while the current processing logic uses the supplied roll-number list. Ensure the list matches the actual absentees.
+- Staff email addresses in the source are placeholders and must be configured before use.
+- Email delivery requires valid SMTP credentials and network access.
+- This is an educational project. Test with sample data before using any real student information.
 
-## License
+## Author
 
-This project is open-source and available under the [MIT License](LICENSE).
+**Narendar Koratla** · [GitHub](https://github.com/NarendarKoratla)
